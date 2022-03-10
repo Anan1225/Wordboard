@@ -2,11 +2,13 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/Anan1225/memrizr/model"
+	"github.com/Anan1225/memrizr/model/apperrors"
 	"github.com/Anan1225/memrizr/model/mocks"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -24,7 +26,7 @@ func TestMe(t *testing.T) {
 		mockUserResp := &model.User{
 			UID:   uid,
 			Email: "bob@bob.com",
-			Name:  "Bob France",
+			Name:  "Bob Bandy",
 		}
 
 		mockUserService := new(mocks.MockUserService)
@@ -58,9 +60,67 @@ func TestMe(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.Equal(t, 200, rr.Code)
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 		assert.Equal(t, respBody, rr.Body.Bytes())
 		mockUserService.AssertExpectations(t) // assert that UserService.Get was called
 	})
 
+	t.Run("NoContextUser", func(t *testing.T) {
+		mockUserService := new(mocks.MockUserService)
+		mockUserService.On("Get", mock.Anything, mock.Anything).Return(nil, nil)
+
+		// a response recorder for getting written http response
+		rr := httptest.NewRecorder()
+
+		// do not append user to context
+		router := gin.Default()
+		NewHandler(&Config{
+			R:           router,
+			UserService: mockUserService,
+		})
+
+		request, err := http.NewRequest(http.MethodGet, "/me", nil)
+		assert.NoError(t, err)
+
+		router.ServeHTTP(rr, request)
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+
+		mockUserService.AssertNotCalled(t, "Get", mock.Anything)
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		uid, _ := uuid.NewRandom()
+		mockUserService := new(mocks.MockUserService)
+		mockUserService.On("Get", mock.Anything, uid).Return(nil, fmt.Errorf("Dome error down call chain"))
+
+		// a response recorder for getting written http response
+		rr := httptest.NewRecorder()
+
+		router := gin.Default()
+		router.Use(func(c *gin.Context) {
+			c.Set("user", &model.User{
+				UID: uid,
+			})
+		})
+
+		NewHandler(&Config{
+			R:           router,
+			UserService: mockUserService,
+		})
+
+		request, err := http.NewRequest(http.MethodGet, "/me", nil)
+		assert.NoError(t, err)
+
+		router.ServeHTTP(rr, request)
+
+		respErr := apperrors.NewNotFound("user", uid.String())
+
+		respBody, err := json.Marshal(gin.H{
+			"error": respErr,
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, respErr.Status(), rr.Code)
+		assert.Equal(t, respBody, rr.Body.Bytes())
+		mockUserService.AssertExpectations(t) // assert that UserService.Get was called
+	})
 }
