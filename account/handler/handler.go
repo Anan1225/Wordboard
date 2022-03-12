@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Anan1225/memrizr/model"
+	"github.com/Anan1225/wordboard/account/model"
 	"github.com/gin-gonic/gin"
 )
 
@@ -55,13 +55,6 @@ func NewHandler(c *Config) {
 // 		"hello": "it's me",
 // 	})
 // }
-
-// Signup handler
-func (h *Handler) Signup(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"hello": "it's signup",
-	})
-}
 
 // Signin handler
 func (h *Handler) Signin(c *gin.Context) {

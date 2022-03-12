@@ -1,4 +1,4 @@
-module github.com/Anan1225/memrizr
+module github.com/Anan1225/wordboard/account
 
 go 1.17
 
