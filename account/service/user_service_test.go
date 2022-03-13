@@ -7,12 +7,17 @@ import (
 
 	"github.com/Anan1225/wordboard/account/model"
 	"github.com/Anan1225/wordboard/account/model/mocks"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestGet(t *testing.T) {
+
+	// Setup
+	gin.SetMode(gin.TestMode)
+
 	t.Run("Success", func(t *testing.T) {
 		uid, _ := uuid.NewRandom()
 

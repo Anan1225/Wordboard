@@ -26,7 +26,7 @@ func TestMe(t *testing.T) {
 		mockUserResp := &model.User{
 			UID:   uid,
 			Email: "bob@bob.com",
-			Name:  "Bob Bandy",
+			Name:  "Bobby Bobson",
 		}
 
 		mockUserService := new(mocks.MockUserService)
@@ -42,7 +42,8 @@ func TestMe(t *testing.T) {
 		router.Use(func(c *gin.Context) {
 			c.Set("user", &model.User{
 				UID: uid,
-			})
+			},
+			)
 		})
 
 		NewHandler(&Config{
@@ -60,7 +61,7 @@ func TestMe(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+		assert.Equal(t, 200, rr.Code)
 		assert.Equal(t, respBody, rr.Body.Bytes())
 		mockUserService.AssertExpectations(t) // assert that UserService.Get was called
 	})
@@ -83,7 +84,7 @@ func TestMe(t *testing.T) {
 		assert.NoError(t, err)
 
 		router.ServeHTTP(rr, request)
-		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+		assert.Equal(t, 500, rr.Code)
 
 		mockUserService.AssertNotCalled(t, "Get", mock.Anything)
 	})

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/Anan1225/wordboard/account/model"
 	"github.com/Anan1225/wordboard/account/model/apperrors"
@@ -17,10 +18,6 @@ type signupReq struct {
 
 // Signup handler
 func (h *Handler) Signup(c *gin.Context) {
-	// c.JSON(http.StatusOK, gin.H{
-	// 	"hello": "it's signup",
-	// })
-
 	// define a variable to which we'll bind incoming
 	// json body, {email, passeord}
 	var req signupReq
@@ -45,4 +42,23 @@ func (h *Handler) Signup(c *gin.Context) {
 		return
 	}
 
+	// create token pair as strings
+	tokens, err := h.TokenService.NewPairFromUser(c, u, "")
+
+	if err != nil {
+		log.Printf("Failed to create tokens for user: %v\n", err.Error())
+
+		// may eventually implement rollback logic here
+		// meaning, if we fail to create tokens after creating a user,
+		// we make sure to clear/delete the created user in the database
+
+		c.JSON(apperrors.Status(err), gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"tokens": tokens,
+	})
 }
