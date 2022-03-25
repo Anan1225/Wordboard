@@ -8,19 +8,24 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/Anan1225/wordboard/account/handler"
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	log.Println("Starting server in memrizr...")
 
-	router := gin.New()
+	// initialize data sources
+	ds, err := initDS()
 
-	handler.NewHandler(&handler.Config{
-		R: router,
-	})
+	if err != nil {
+		log.Fatalf("Unable to initialize data sources: %v\n", err)
+	}
+
+	// router := gin.New()
+	router, err := inject(ds)
+
+	if err != nil {
+		log.Fatalf("Failure to inject data sources: %v\n", err)
+	}
 
 	// router.GET("/api/account", func(c *gin.Context) {
 	// 	c.JSON(http.StatusOK, gin.H{
@@ -36,7 +41,6 @@ func main() {
 	// Graceful shutdown reference from gin's example:
 	// https://github.com/gin-gonic/examples/blob/master/graceful-shutdown/graceful-shutdown/server.go
 	// Initilize server in goroutine so we can gracefully shut down all connections
-
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to initialize server: %v\n", err)
@@ -57,6 +61,11 @@ func main() {
 	// the request it is currently handling
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
+	// shutdown data sources
+	if err := ds.close(); err != nil {
+		log.Fatalf("A problem occurred gracefully shutting down data sources: %v\n", err)
+	}
 
 	// Shutdown server
 	log.Println("Shutting down server...")

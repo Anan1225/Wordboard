@@ -1,2 +1,4 @@
-.env.dev
+account/.env.dev
 *.pem
+.idea
+*.sql
