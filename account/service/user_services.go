@@ -9,9 +9,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// UserService acts as a struct for injecting an implementation of UserRepository
+// userService acts as a struct for injecting an implementation of UserRepository
 // for use in service methods
-type UserService struct {
+type userService struct {
 	UserRepository model.UserRepository
 }
 
@@ -24,13 +24,13 @@ type USConfig struct {
 // NewUserService is a factory function for
 // initializing a UserService with its repository layer dependence
 func NewUserService(c *USConfig) model.UserService {
-	return &UserService{
+	return &userService{
 		UserRepository: c.UserRepository,
 	}
 }
 
 // Get retrieves a user based on their uuid
-func (s *UserService) Get(ctx context.Context, uid uuid.UUID) (*model.User, error) {
+func (s *userService) Get(ctx context.Context, uid uuid.UUID) (*model.User, error) {
 	u, err := s.UserRepository.FindByID(ctx, uid)
 
 	return u, err
@@ -39,7 +39,7 @@ func (s *UserService) Get(ctx context.Context, uid uuid.UUID) (*model.User, erro
 // Signup reaches our to a UserRepository to vertify the
 // email address is valiable and signs up the user if this is the case
 
-func (s *UserService) Signup(ctx context.Context, u *model.User) error {
+func (s *userService) Signup(ctx context.Context, u *model.User) error {
 	// panic("Method not implemented")
 	// if err := s.UserRepository.Create(ctx, u); err != nil {
 	// 	return err

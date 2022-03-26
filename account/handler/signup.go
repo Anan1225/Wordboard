@@ -32,7 +32,9 @@ func (h *Handler) Signup(c *gin.Context) {
 		Password: req.Password,
 	}
 
-	err := h.UserService.Signup(c, u)
+	// use the Request Context
+	ctx := c.Request.Context()
+	err := h.UserService.Signup(ctx, u)
 
 	if err != nil {
 		log.Printf("Failed to sign up user: %v\n", err.Error())
