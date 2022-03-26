@@ -212,7 +212,7 @@ func TestSignup(t *testing.T) {
 		mockTokenService := new(mocks.MockTokenService)
 
 		mockUserService.On("Signup", mock.AnythingOfType("*context.emptyCtx"), u).Return(nil)
-		mockTokenService.On("NewPairFromUser", mock.AnythingOfType("*gin.Context"), u, "").Return(mockTokenResp, nil)
+		mockTokenService.On("NewPairFromUser", mock.AnythingOfType("*context.emptyCtx"), u, "").Return(mockTokenResp, nil)
 
 		// a response recorder for getting writtem http response
 		rr := httptest.NewRecorder()
@@ -265,8 +265,9 @@ func TestSignup(t *testing.T) {
 		mockTokenService := new(mocks.MockTokenService)
 
 		mockUserService.On("Signup", mock.AnythingOfType("*context.emptyCtx"), u).Return(nil)
-		// TODO: why the "*context.emptyCtx" does not work well here?
-		mockTokenService.On("NewPairFromUser", mock.AnythingOfType("*gin.Context"), u, "").Return(nil, mockErrorResponse)
+		// Q: Why the "*context.emptyCtx" does not work well
+		// A: Fixed with a declartion in signup, mixed with c and ctx
+		mockTokenService.On("NewPairFromUser", mock.AnythingOfType("*context.emptyCtx"), u, "").Return(nil, mockErrorResponse)
 
 		// a response recorder for getting written http response
 		rr := httptest.NewRecorder()
