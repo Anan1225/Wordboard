@@ -15,7 +15,7 @@ services:
       - "8080:8080"
     volumes:
       # So that Traefik can listen to the Docker events
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:ro
 
   postgres-account:
     image: "postgres:alpine"
@@ -29,6 +29,7 @@ services:
       - "pgdata_account:/var/lib/postgresql/data"
       # - ./init:/docker-entrypoint-initdb.d/
     command: ["postgres", "-c", "log_statement=all"]
+
   redis-account:
     image: "redis:alpine"
     ports:
@@ -42,13 +43,13 @@ services:
       target: builder
     # if we don't give image name, traefik won't create router 🤷‍♂️
     image: account 
-    env_file: account/.env.dev
+    env_file: ./account/.env.dev
     expose:
       # seems necessary for Traefik to have internal expose of port
       - "8080" 
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.account.rule=Host(`malcorp`) && PathPrefix(`/api/account`)"
+      - "traefik.http.routers.account.rule=Host(`malcorp.test`) && PathPrefix(`/api/account`)"
     environment:
       - ENV=dev
     volumes:

@@ -2,8 +2,11 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
+	"github.com/Anan1225/wordboard/account/handler/middleware"
 	"github.com/Anan1225/wordboard/account/model"
+	"github.com/Anan1225/wordboard/account/model/apperrors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,10 +19,11 @@ type Handler struct {
 // Config will hold services that will eventually be injected into this
 // handler layer on handler initialization
 type Config struct {
-	R            *gin.Engine
-	UserService  model.UserService
-	TokenService model.TokenService
-	BaseURL      string
+	R               *gin.Engine
+	UserService     model.UserService
+	TokenService    model.TokenService
+	BaseURL         string
+	TimeoutDuration time.Duration
 }
 
 // NewHandler initializes the handler with required injected services along with http routes
@@ -30,11 +34,15 @@ func NewHandler(c *Config) {
 		UserService:  c.UserService,
 		TokenService: c.TokenService,
 	}
-	// Create an account group
+	// Create a group, or base url for all routes
 	// g := c.R.Group("/api/account")
 	g := c.R.Group(c.BaseURL)
 
-	g.GET("me", h.Me)
+	if gin.Mode() != gin.TestMode {
+		g.Use(middleware.Timeout(c.TimeoutDuration, apperrors.NewServiceUnavailable()))
+	}
+
+	g.GET("/me", h.Me)
 	g.POST("/signup", h.Signup)
 	g.POST("/signin", h.Signin)
 	g.POST("/signout", h.Signout)
@@ -60,6 +68,7 @@ func NewHandler(c *Config) {
 
 // Signin handler
 func (h *Handler) Signin(c *gin.Context) {
+	time.Sleep(1 * time.Second) // to demonstrate a timeout
 	c.JSON(http.StatusOK, gin.H{
 		"hello": "it's signin",
 	})

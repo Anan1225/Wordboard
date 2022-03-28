@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/Anan1225/wordboard/account/handler"
 	"github.com/Anan1225/wordboard/account/repository"
@@ -13,8 +14,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
-
-// your imports here
 
 // will initialize a handler starting from data sources
 // which inject into repository layer
@@ -95,11 +94,19 @@ func inject(d *dataSources) (*gin.Engine, error) {
 	//read in ACCOUNT_API_URL
 	baseURL := os.Getenv("ACCOUNT_API_URL")
 
+	// read in HANDLER_TIMEOUT
+	handlerTimeout := os.Getenv("HANDLER_TIMEOUT")
+	ht, err := strconv.ParseInt(handlerTimeout, 0, 64)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse HANDLER_TIMEOUT as int: %w", err)
+	}
+
 	handler.NewHandler(&handler.Config{
-		R:            router,
-		UserService:  userService,
-		TokenService: tokenService,
-		BaseURL:      baseURL,
+		R:               router,
+		UserService:     userService,
+		TokenService:    tokenService,
+		BaseURL:         baseURL,
+		TimeoutDuration: time.Duration(time.Duration(ht) * time.Second),
 	})
 
 	return router, nil

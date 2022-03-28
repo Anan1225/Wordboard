@@ -50,7 +50,7 @@ func initDS() (*dataSources, error) {
 	log.Printf("Connecting to Redis\n")
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%s", redisHost, redisPort),
-		Password: "",
+		Password: "redis",
 		DB:       0,
 	})
 

@@ -46,13 +46,12 @@ func main() {
 			log.Fatalf("Failed to initialize server: %v\n", err)
 		}
 	}()
-
 	log.Printf("Listening on port %v\n", srv.Addr)
 
 	// Wait for kill signal of channel
 	quit := make(chan os.Signal)
 
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	// This blocks until a signal is passed into the quit channel
 	<-quit
