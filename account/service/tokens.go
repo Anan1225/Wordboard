@@ -2,6 +2,7 @@ package service
 
 import (
 	"crypto/rsa"
+	"fmt"
 	"log"
 	"time"
 
@@ -13,6 +14,22 @@ import (
 // IDTokenCustomClaims holds structure of jwt claims of idToken
 type IDTokenCustomClaims struct {
 	User *model.User `json:"user"`
+	jwt.StandardClaims
+}
+
+// RefreshToken holds the actual signed jwt string along with the ID
+// We return the id so it can be used without re-parsing the JWT from signed string
+type RefreshToken struct {
+	SS        string
+	ID        string
+	ExpiresIn time.Duration
+}
+
+// RefreshTokenCustomClaims holds the payload of a refresh token
+// This can be used to extract user id for subsequent
+// application operations (IE, fetch user in Redis)
+type RefreshTokenCustomClaims struct {
+	UID uuid.UUID `json:"uid"`
 	jwt.StandardClaims
 }
 
@@ -39,22 +56,6 @@ func generateIDToken(u *model.User, key *rsa.PrivateKey, exp int64) (string, err
 	}
 
 	return ss, nil
-}
-
-// RefreshToken holds the actual signed jwt string along with the ID
-// We return the id so it can be used without re-parsing the JWT from signed string
-type RefreshToken struct {
-	SS        string
-	ID        string
-	ExpiresIn time.Duration
-}
-
-// RefreshTokenCustomClaims holds the payload of a refresh token
-// This can be used to extract user id for subsequent
-// application operations (IE, fetch user in Redis)
-type RefreshTokenCustomClaims struct {
-	UID uuid.UUID `json:"uid"`
-	jwt.StandardClaims
 }
 
 // generateRefreshToken creates a refresh token
@@ -92,4 +93,30 @@ func generateRefreshToken(uid uuid.UUID, key string, exp int64) (*RefreshToken, 
 		ID:        tokenID.String(),
 		ExpiresIn: tokenExp.Sub(currentTime),
 	}, nil
+}
+
+// validateIDToken returns the token's claims if the token is valid
+func validateIDToken(tokenString string, key *rsa.PublicKey) (*IDTokenCustomClaims, error) {
+	claims := &IDTokenCustomClaims{}
+
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return key, nil
+	})
+
+	// For now we'll just return the error and handle logging in service level
+	if err != nil {
+		return nil, err
+	}
+
+	if !token.Valid {
+		return nil, fmt.Errorf("ID token is invalid")
+	}
+
+	claims, ok := token.Claims.(*IDTokenCustomClaims)
+
+	if !ok {
+		return nil, fmt.Errorf("ID token valid but couldn't parse claims")
+	}
+
+	return claims, nil
 }

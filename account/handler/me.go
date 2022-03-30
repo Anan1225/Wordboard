@@ -11,20 +11,20 @@ import (
 
 // Me handler calls services for getting
 // a user's details
+
 func (h *Handler) Me(c *gin.Context) {
 	// A *model.User will eventually be added to context in middleware
 	user, exists := c.Get("user")
 
-	// This shouldn't happen, as our middleware ought to throw an error
-	// This is an extra safety measure
-	// We'll extract this logic later as it will be common to all handler
-	// methods which require a vaild user
+	// This shouldn't happen, as our middleware ought to throw an error.
+	// We can also use "MustGet" to get the key or panic
 	if !exists {
 		log.Printf("Unable to extract user from request context for unknown reason: %v\n", c)
 		err := apperrors.NewInternal()
 		c.JSON(err.Status(), gin.H{
 			"error": err,
 		})
+
 		return
 	}
 
