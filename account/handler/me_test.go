@@ -17,8 +17,8 @@ import (
 )
 
 func TestMe(t *testing.T) {
-	// // Setup
-	// gin.SetMode(gin.TestMode)
+	// Setup
+	gin.SetMode(gin.TestMode)
 
 	t.Run("Success", func(t *testing.T) {
 		uid, _ := uuid.NewRandom()
