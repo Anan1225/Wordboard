@@ -7,6 +7,7 @@ import (
 
 	"github.com/Anan1225/wordboard/account/model"
 	"github.com/Anan1225/wordboard/account/model/apperrors"
+	"github.com/google/uuid"
 )
 
 // TokenService used for injecting an implementation of TokenRepository
@@ -95,4 +96,39 @@ func (s *tokenService) ValidateIDToken(tokenString string) (*model.User, error) 
 	}
 
 	return claims.User, nil
+}
+
+// ValidateRefreshToken checks to make sure the JWT provided by a string is valid
+// and returns a RefreshToken if valid
+func (s *tokenService) ValidateRefreshToken(tokenString string) (*model.RefreshToken, error) {
+	// panic("unimplemented")
+
+	// validate actual JWT with string a secret
+	claims, err := validateRefreshToken(tokenString, s.RefreshSecret)
+
+	// We'll just return unauthorized error in all instances of failing to verify user
+	if err != nil {
+		log.Printf("Unable to validate or parse refreshToken for token string: %s\n%v\n", tokenString, err)
+		return nil, apperrors.NewAuthorization("Unable to verify user from refresh token")
+	}
+
+	// Standard claims store ID as a string. I want "model" to be clear our string
+	// is a UUID. So we parse claims.Id as UUID
+	tokenUUID, err := uuid.Parse(claims.Id)
+
+	if err != nil {
+		log.Printf("Claims ID could not be parsed as UUID: %s\n%v\n", claims.Id, err)
+		return nil, apperrors.NewAuthorization("Unable to verify user from refresh token")
+	}
+
+	return &model.RefreshToken{
+		SS:  tokenString,
+		ID:  tokenUUID,
+		UID: claims.UID,
+	}, nil
+}
+
+// Signout reaches out to the repository layer to delete all valid tokens for a user
+func (s *tokenService) Signout(ctx context.Context, uid uuid.UUID) error {
+	return s.TokenRepository.DeleteUserRefreshTokens(ctx, uid.String())
 }
